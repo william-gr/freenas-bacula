@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec /usr/pbi/bacula-$(uname -m)/bin/python /usr/pbi/bacula-$(uname -m)/control.py $*

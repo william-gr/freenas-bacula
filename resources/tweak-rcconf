@@ -1,0 +1,8 @@
+#!/bin/sh
+
+bacula_path=/usr/pbi/bacula-$(uname -m)
+tmpfile=$(mktemp /tmp/.XXXXXX)
+
+grep -v 'bacula_' /etc/rc.conf > ${tmpfile}
+cat ${bacula_path}/etc/rc.conf >> ${tmpfile}
+mv ${tmpfile} /etc/rc.conf
