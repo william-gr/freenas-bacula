@@ -183,7 +183,7 @@ def start(request):
         bacula = models.BaculaSDStorage.objects.create(enable=True)
 
     try:
-        form = forms.BaculaForm(bacula.__dict__, instance=bacula, jail=jail)
+        form = forms.BaculaSDStorageForm(bacula.__dict__, instance=bacula)
         form.is_valid()
         form.save()
     except ValueError:
@@ -377,8 +377,15 @@ def treemenu_icon(request):
 
 def devices_new(request):
 
+    bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=bacula_key,
+        secret=bacula_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+
+    jail = json.loads(server.plugins.jail.info())[0]
     if request.method == "POST":
-        form = forms.BaculaSDDeviceForm(request.POST)
+        form = forms.BaculaSDDeviceForm(request.POST, jail=jail)
         if form.is_valid():
             form.save()
             return JsonResponse(request, message="Device added")
@@ -386,7 +393,7 @@ def devices_new(request):
             'form': form,
         })
     else:
-        form = forms.BaculaSDDeviceForm()
+        form = forms.BaculaSDDeviceForm(jail=jail)
 
     return render(request, "devices_new.html", {
         'form': form,
@@ -395,9 +402,16 @@ def devices_new(request):
 
 def devices_edit(request, oid):
 
+    bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=bacula_key,
+        secret=bacula_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+
+    jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDDevice.objects.get(id=oid)
     if request.method == "POST":
-        form = forms.BaculaSDDeviceForm(request.POST, instance=instance)
+        form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail=jail)
         if form.is_valid():
             form.save()
             return JsonResponse(request, message="Device updated")
@@ -405,7 +419,7 @@ def devices_edit(request, oid):
             'form': form,
         })
     else:
-        form = forms.BaculaSDDeviceForm(instance=instance)
+        form = forms.BaculaSDDeviceForm(instance=instance, jail=jail)
 
     return render(request, "devices_edit.html", {
         'form': form,

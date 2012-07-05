@@ -2,7 +2,7 @@ from subprocess import Popen, PIPE
 import os
 import platform
 
-bacula_pbi_path = "/usr/pbi/bacula-" + platform.machine()
+bacula_pbi_path = "/usr/pbi/bacula-server-" + platform.machine()
 bacula_etc_path = os.path.join(bacula_pbi_path, "etc")
 bacula_mnt_path = os.path.join(bacula_pbi_path, "mnt")
 bacula_fcgi_pidfile = "/var/run/bacula_fcgi_server.pid"
