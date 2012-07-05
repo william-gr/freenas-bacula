@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import pwd
@@ -10,52 +9,15 @@ from dojango import forms
 from baculaUI.freenas import models, utils
 
 
-class BaculaForm(forms.ModelForm):
-
-    class Meta:
-        model = models.Bacula
-        widgets = {
-            'rpc_port': forms.widgets.TextInput(),
-        }
-        exclude = (
-            'enable',
-            )
-
-    def __init__(self, *args, **kwargs):
-        self.jail = kwargs.pop('jail')
-        super(BaculaForm, self).__init__(*args, **kwargs)
-
-        self.fields['logfile'].widget = forms.widgets.TextInput(attrs={
-            'data-dojo-type': 'freeadmin.form.PathSelector',
-            'root': os.path.join(
-                self.jail['fields']['jail_path'],
-                self.jail['fields']['jail_name'],
-                #self.plugin['fields']['plugin_path'][1:],
-                ),
-            'dirsonly': 'false',
-            })
-
-        self.fields['conf_dir'].widget = \
-        self.fields['download_dir'].widget = \
-        self.fields['watch_dir'].widget = forms.widgets.TextInput(attrs={
-            'data-dojo-type': 'freeadmin.form.PathSelector',
-            'root': os.path.join(
-                self.jail['fields']['jail_path'],
-                self.jail['fields']['jail_name'],
-                #self.plugin['fields']['plugin_path'][1:],
-                ),
-            'dirsonly': 'true',
-            })
-
-    def clean_rpc_password(self):
-        rpc_password = self.cleaned_data.get("rpc_password")
-        if not rpc_password:
-            return self.instance.rpc_password
-        return rpc_password
+class BaculaSDStorageForm(forms.ModelForm):
 
     def save(self, *args, **kwargs):
-        obj = super(BaculaForm, self).save(*args, **kwargs)
+        obj = super(BaculaSDStorageForm, self).save(*args, **kwargs)
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
 
+        """
         advanced_settings = {}
         for field in obj._meta.local_fields:
             if field.attname not in utils.bacula_advanced_vars:
@@ -97,50 +59,128 @@ class BaculaForm(forms.ModelForm):
         except:
             user_ids = None
 
-        if obj.watch_dir:
-            try:
-                os.chmod(obj.watch_dir, 0o755)
-                if user_ids:
-                    os.chown(obj.watch_dir, *user_ids)
-            except:
-                pass
-
-        if not os.path.exists(obj.conf_dir):
-            try:
-                os.makedirs(obj.conf_dir)
-            except OSError:
-                pass
-
-        try:
-            os.chmod(obj.conf_dir, 0o755)
-            if user_ids:
-                os.chown(obj.conf_dir, *user_ids)
-        except:
-            pass
-
-        if obj.download_dir:
-            try:
-                os.chmod(obj.download_dir, 0o755)
-                if user_ids:
-                    os.chown(obj.download_dir, *user_ids)
-            except:
-                pass
-
-        settingsfile = os.path.join(obj.conf_dir, "settings.json")
-        if os.path.exists(settingsfile):
-            with open(settingsfile, 'r') as f:
-                settings = json.loads(f.read())
-        else:
-            try:
-                open(settingsfile, 'w').close()
-            except OSError:
-                #FIXME
-                pass
-            settings = {}
-
-        if obj.rpc_password:
-            settings['rpc-password'] = '{' + hashlib.sha1(obj.rpc_password).hexdigest()
-        with open(settingsfile, 'w') as f:
-            f.write(json.dumps(settings, sort_keys=True, indent=4))
-
         os.system(os.path.join(utils.bacula_pbi_path, "tweak-rcconf"))
+        """
+        return obj
+
+    class Meta:
+        model = models.BaculaSDStorage
+        widgets = {
+            'baculasd_st_sdport': forms.widgets.TextInput(),
+        }
+        exclude = (
+            'enable',
+            )
+
+
+class BaculaSDDirectorForm(forms.ModelForm):
+
+    def save(self):
+        obj = super(BaculaSDDirectorForm, self).save()
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+        return obj
+
+    class Meta:
+        model = models.BaculaSDDirector
+
+
+class BaculaSDDeviceForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        self.jail = kwargs.pop('jail')
+        super(BaculaSDDeviceForm, self).__init__(*args, **kwargs)
+
+        self.fields['baculasd_dev_archivedevice'].widget = forms.widgets.TextInput(attrs={
+            'data-dojo-type': 'freeadmin.form.PathSelector',
+            'root': os.path.join(
+                self.jail['fields']['jail_path'],
+                self.jail['fields']['jail_name'],
+                #self.plugin['fields']['plugin_path'][1:],
+                ),
+            'dirsonly': 'false',
+            })
+
+    def save(self):
+        super(BaculaSDDeviceForm, self).save()
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+
+    class Meta:
+        model = models.BaculaSDDevice
+        widgets = {
+            'baculasd_dev_mediatype': forms.widgets.FilteringSelect(),
+        }
+
+
+class BaculaSDMessagesForm(forms.ModelForm):
+
+    def clean_baculasd_msg_address(self):
+        address = self.cleaned_data.get("baculasd_msg_address")
+        destination = self.cleaned_data.get("baculasd_msg_destination")
+        if destination == 'stdout':
+            address = ""
+        elif destination == 'stderr':
+            return ""
+        elif destination == 'console':
+            return ""
+        elif destination == 'syslog':
+            return ""
+        elif destination == 'director':
+            return 'bacula-dir'
+        else:
+            return address
+
+    def clean_baculasd_msg_msgtypeaux(self):
+        msgtypeaux = self.cleaned_data.get("baculasd_msg_msgtypeaux")
+        if msgtypeaux.startswith('#'):
+            return ""
+        else:
+            return msgtypeaux
+
+    def save(self):
+        super(BaculaSDMessagesForm, self).save()
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+
+    class Meta:
+        model = models.BaculaSDMessages
+
+
+class BaculaSDDeviceAssignmentForm(forms.ModelForm):
+
+    def save(self):
+        super(BaculaSDDeviceAssignmentForm, self).save()
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+
+    class Meta:
+        model = models.BaculaSDDeviceAssignment
+
+
+class BaculaSDDirectorAssignmentForm(forms.ModelForm):
+
+    def save(self):
+        super(BaculaSDDirectorAssignmentForm, self).save()
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+
+    class Meta:
+        model = models.BaculaSDDirectorAssignment
+
+
+class BaculaSDMessagesAssignmentForm(forms.ModelForm):
+
+    def save(self):
+        super(BaculaSDMessagesAssignmentForm, self).save()
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+
+    class Meta:
+        model = models.BaculaSDMessagesAssignment
