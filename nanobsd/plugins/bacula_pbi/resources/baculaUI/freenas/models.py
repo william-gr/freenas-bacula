@@ -7,7 +7,7 @@ from baculaUI import choices
 
 class BaculaSDStorage(models.Model):
     """
-    Django model describing every tunable setting for transmission
+    Django model describing every tunable setting for bacula
     """
 
     enable = models.BooleanField(default=False)

@@ -300,35 +300,39 @@ def treemenu(request):
         'icon': reverse('treemenu_icon'),
         'type': 'pluginsfcgi',
         'url': reverse('bacula_edit'),
-        'kwargs': {'plugin_name': 'bacula'},
         'children': [
             {
-                'name': 'Assignments',
+                'name': 'Bacula Settings',
+                'type': 'pluginsfcgi',
+                'url': reverse('bacula_edit'),
+            },
+            {
+                'name': 'Directors',
                 'children': [
                     {
-                        'name': 'Add Assignment',
+                        'name': 'Add Director',
                         'type': 'pluginsfcgi',
-                        'url': reverse('bacula_edit'),
+                        'url': reverse('bacula_directors_new'),
                     },
                     {
-                        'name': 'View Assignments',
+                        'name': 'View Directors',
                         'type': 'pluginsfcgi',
-                        'url': reverse('bacula_edit'),
+                        'url': reverse('bacula_directors_view'),
                     },
                 ],
             },
             {
-                'name': 'Resources',
+                'name': 'Devices',
                 'children': [
                     {
-                        'name': 'Add Resource',
+                        'name': 'Add Device',
                         'type': 'pluginsfcgi',
-                        'url': reverse('bacula_edit'),
+                        'url': reverse('bacula_devices_new'),
                     },
                     {
-                        'name': 'View Resources',
+                        'name': 'View Devices',
                         'type': 'pluginsfcgi',
-                        'url': reverse('bacula_edit'),
+                        'url': reverse('bacula_devices_view'),
                     },
                 ],
             },
@@ -400,6 +404,10 @@ def devices_new(request):
     })
 
 
+def devices_view(request):
+    return render(request, "devices_view.html", {})
+
+
 def devices_edit(request, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
@@ -415,7 +423,7 @@ def devices_edit(request, oid):
         if form.is_valid():
             form.save()
             return JsonResponse(request, message="Device updated")
-        return JsonResponse(request, tpl="devices_edited.html", ctx={
+        return JsonResponse(request, tpl="devices_edit.html", ctx={
             'form': form,
         })
     else:
@@ -424,3 +432,58 @@ def devices_edit(request, oid):
     return render(request, "devices_edit.html", {
         'form': form,
     })
+
+
+def diretors_new(request):
+
+    bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=bacula_key,
+        secret=bacula_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+
+    jail = json.loads(server.plugins.jail.info())[0]
+    if request.method == "POST":
+        form = forms.BaculaSDDirectorAssignmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse(request, message="Device added")
+        return JsonResponse(request, tpl="directors_new.html", ctx={
+            'form': form,
+        })
+    else:
+        form = forms.BaculaSDDirectorAssignment(jail=jail)
+
+    return render(request, "directors_new.html", {
+        'form': form,
+    })
+
+
+def directors_edit(request, oid):
+
+    bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=bacula_key,
+        secret=bacula_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+
+    jail = json.loads(server.plugins.jail.info())[0]
+    instance = models.BaculaSDDirectorAssignment.objects.get(id=oid)
+    if request.method == "POST":
+        form = forms.BaculaSDDirectorAssignmentForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return JsonResponse(request, message="Director updated")
+        return JsonResponse(request, tpl="directors_edit.html", ctx={
+            'form': form,
+        })
+    else:
+        form = forms.BaculaSDDirectorAssignmentForm(instance=instance)
+
+    return render(request, "directors_edit.html", {
+        'form': form,
+    })
+
+
+def directors_view(request):
+    return render(request, "devices_view.html", {})
