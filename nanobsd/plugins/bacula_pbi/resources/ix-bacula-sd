@@ -1,0 +1,275 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-bacula-sd
+# REQUIRE: NETWORKING
+# BEFORE: bacula-sd
+
+. /etc/rc.subr
+
+: ${bacula_sd_config="/usr/local/etc/bacula-sd.conf"}
+
+query_db () {
+  local STATEMENT="$1"
+  ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${STATEMENT}"
+}
+
+trans_bool () {
+  case $1 in
+    (0) echo No  ;;
+    (1) echo Yes ;;
+  esac
+}
+
+print_sql_storage () {
+  local STORAGE_ID=${1:-0}
+
+  cat <<- EOT
+	SELECT baculasd_st_name,
+	       baculasd_st_sdport,
+	       baculasd_st_workingdirectory,
+	       baculasd_st_piddirectory,
+	       baculasd_st_maximumconcurrentjobs
+	FROM services_baculasdstorage
+	WHERE id = ${STORAGE_ID=$}
+	EOT
+}
+
+print_storage_stanza () {
+  local STORAGE_ID=${1:-0}
+  local STATEMENT="$(print_sql_storage ${STORAGE_ID})"
+  local IFS=\|
+
+  query_db "${STATEMENT}"              \
+  | while read NAME                    \
+               SDPORT                  \
+               WORKING_DIRECTORY       \
+               PID_DIRECTORY           \
+               MAXIMUM_CONCURRENT_JOBS
+    do
+      echo 'Storage {'
+      [ ${NAME}                    ] && echo "  Name = ${NAME}"
+      [ ${SDPORT}                  ] && echo "  SDPort = ${SDPORT}"
+      [ ${WORKING_DIRECTORY}       ] && echo "  Working Directory = ${WORKING_DIRECTORY}"
+      [ ${PID_DIRECTORY}           ] && echo "  Pid Directory = ${PID_DIRECTORY}"
+      [ ${MAXIMUM_CONCURRENT_JOBS} ] && echo "  Maximum Concurrent Jobs = ${MAXIMUM_CONCURRENT_JOBS}"
+      echo '}'
+    done
+}
+
+print_sql_director () {
+  local STORAGE_ID=${1:-0}
+
+  cat <<- EOT
+	SELECT baculasd_dir_name,
+	       baculasd_dir_password,
+	       baculasd_dir_monitor
+	FROM services_baculasddirector           AS r,
+	     services_baculasddirectorassignment AS a
+	WHERE r.id = a.baculasd_map_director_id AND
+	      baculasd_map_storage_id = ${STORAGE_ID};
+	EOT
+}
+
+print_director_stanzas () {
+  local STORAGE_ID=${1:-0}
+  local STATEMENT="$(print_sql_director ${STORAGE_ID})"
+  local IFS=\|
+
+  query_db "${STATEMENT}" \
+  | while read NAME       \
+               PASSWORD   \
+               MONITOR
+    do
+      echo 'Director {'
+      [ ${NAME}     ] && echo "  Name = ${NAME}"
+      [ ${PASSWORD} ] && echo "  Password = ${PASSWORD}"
+      [ ${MONITOR}  ] && echo "  Monitor  = $(trans_bool ${MONITOR})"
+      echo '}'
+    done
+}
+
+print_sql_device () {
+  local STORAGE_ID=${1:-0}
+
+  cat <<- EOT
+	SELECT baculasd_dev_name,
+	       baculasd_dev_mediatype,
+	       baculasd_dev_archivedevice,
+	       baculasd_dev_labelmedia,
+	       baculasd_dev_randomaccess,
+	       baculasd_dev_automaticmount,
+	       baculasd_dev_removablemedia,
+	       baculasd_dev_alwaysopen
+	FROM services_baculasddevice             AS r,
+	     services_baculasddeviceassignment   AS a
+	WHERE r.id = a.baculasd_map_device_id AND
+	      baculasd_map_storage_id = ${STORAGE_ID};
+	EOT
+}
+
+print_device_stanzas () {
+  local STORAGE_ID=${1:-0}
+  local STATEMENT="$(print_sql_device ${STORAGE_ID})"
+  local IFS=\|
+
+  query_db "${STATEMENT}"     \
+  | while read NAME           \
+               MEDIA_TYPE     \
+               ARCHIVE_DEVICE \
+               LABEL_MEDIA    \
+               RANDOM_ACCESS  \
+               AUTOMATIC_MOUNT \
+               REMOVABLE_MEDIA \
+               ALWAYS_OPEN
+    do
+      echo 'Device {'
+      [ ${NAME}           ] && echo "  Name = ${NAME}"
+      [ ${MEDIA_TYPE}     ] && echo "  Media Type = ${MEDIA_TYPE}"
+      [ ${ARCHIVE_DEVICE} ] && echo "  Archive Device = ${ARCHIVE_DEVICE}"
+      [ ${LABEL_MEDIA}    ] && echo "  Label Media = $(trans_bool ${LABEL_MEDIA})"
+      [ ${RANDOM_ACCESS}  ] && echo "  Random Access = $(trans_bool ${RANDOM_ACCESS})"
+      [ ${AUTOMATIC_MOUNT} ] && echo "  Automatic Mount = $(trans_bool ${AUTOMATIC_MOUNT})"
+      [ ${REMOVABLE_MEDIA} ] && echo "  Removable Media = $(trans_bool ${REMOVABLE_MEDIA})"
+      [ ${ALWAYS_OPEN}     ] && echo "  Always Open = $(trans_bool ${ALWAYS_OPEN})"
+      echo '}'
+    done
+}
+
+print_sql_messages () {
+  local STORAGE_ID=${1:-0}
+
+  cat <<- EOT
+	SELECT baculasd_msg_name,
+	       baculasd_msg_destination,
+	       baculasd_msg_address,
+	       baculasd_msg_msgtype1,
+	       baculasd_msg_msgtype2,
+	       baculasd_msg_msgtype3,
+	       baculasd_msg_msgtypeaux
+	FROM services_baculasdmessages           AS r,
+	     services_baculasdmessagesassignment AS a
+	WHERE r.id = a.baculasd_map_messages_id AND
+	      baculasd_map_storage_id = ${STORAGE_ID};
+	EOT
+}
+
+print_messages_stanzas () {
+  local STORAGE_ID=${1:-0}
+  local STATEMENT="$(print_sql_messages ${STORAGE_ID})"
+  local IFS=\|
+
+  query_db "${STATEMENT}"   \
+  | while read NAME         \
+               DESTINATION  \
+               ADDRESS      \
+               MSG_TYPE1    \
+               MSG_TYPE2    \
+               MSG_TYPE3    \
+               MSG_TYPE_AUX
+    do
+      echo 'Messages {'
+      [ ${NAME}           ] && echo "  Name = ${NAME}"
+      [ ${DESTINATION}    ] && echo "  ${DESTINATION} = ${ADDRESS:+${ADDRESS} = }${MSG_TYPE1}${MSG_TYPE2:+, ${MSG_TYPE2}}${MSG_TYPE3:+, ${MSG_TYPE3}}${MSG_TYPE_AUX:+, ${MSG_TYPE_AUX}}"
+      echo '}'
+    done
+}
+
+generate_bacula_sd_cfg () {
+  local STORAGE_ID=${1:-0}
+  local IFS=\|
+  local RES_DEFINITION=""
+  local RES_NAME=""
+
+  cat <<- EOT
+	################################################
+	# bacula-sd.conf generated by FreeNAS
+	################################################
+	EOT
+
+  print_storage_stanza ${STORAGE_ID}
+  print_director_stanzas ${STORAGE_ID}
+  print_device_stanzas ${STORAGE_ID}
+  print_messages_stanzas ${STORAGE_ID}
+}
+
+check_conf () {
+  local BACULA_SD_CFG="${1}"
+
+  grep -q ^Storage  ${BACULA_SD_CFG} || return 1
+  grep -q ^Device   ${BACULA_SD_CFG} || return 1
+  grep -q ^Director ${BACULA_SD_CFG} || return 1
+  grep -q ^Messages ${BACULA_SD_CFG} || return 1
+}
+
+update_rc_file () {
+  local RC_FILE="/etc/rc.d/bacula-sd"
+  local TMP_FILE="/tmp/bacula-sd.rc.tmp"
+
+  grep -q '^command=/tmp/bacula-sd' ${RC_FILE} && return
+
+  sed -e 's/^command=/procname=/'  \
+      -e 's/^pidfile=/#procname=/' \
+      ${RC_FILE} >                \
+      ${TMP_FILE}
+
+  sed -e '/^procname/a\
+command=/tmp/bacula-sd' ${TMP_FILE} > ${RC_FILE}
+}
+
+print_sql_storage_id () {
+  cat <<- EOT
+	SELECT id,
+	       baculasd_st_sdport,
+	       baculasd_st_proceeddespiteioerrors
+	FROM services_baculasdstorage
+	EOT
+}
+
+generate_bacula_sd()
+{
+  local STATEMENT="$(print_sql_storage_id)"
+  local IFS=\|
+  local BACULA_SD_NEW_CMD="/tmp/bacula-sd"
+  local BACULA_SD_COMMAND="/usr/local/sbin/bacula-sd"
+  local BACULA_SD_FLAGS="-u bacula -g bacula -v"
+  local BACULA_SD_PID=""
+  local STORAGE_ID=""
+  local PROCEED_IOERR=""
+  local P_FLAG=""
+
+  > ${BACULA_SD_NEW_CMD}
+  chmod 700 ${BACULA_SD_NEW_CMD}
+
+  query_db "${STATEMENT}"    \
+  | while read STORAGE_ID    \
+               BACULA_SD_PID \
+               PROCEED_IOERR
+    do
+      BACULA_SD_CFG=/usr/local/etc/bacula-sd.${BACULA_SD_PID}.conf
+
+      if [ $PROCEED_IOERR -eq 1 ]
+      then P_FLAG=" -p"
+      else P_FLAG=""
+      fi
+
+      generate_bacula_sd_cfg ${STORAGE_ID} > ${BACULA_SD_CFG}
+
+      if check_conf ${BACULA_SD_CFG}
+      then
+        echo "${BACULA_SD_COMMAND} ${BACULA_SD_FLAGS}${P_FLAG} -c ${BACULA_SD_CFG}" \
+          >> ${BACULA_SD_NEW_CMD}
+      fi
+
+      update_rc_file
+    done
+}
+
+name=ix-bacula-sd
+start_cmd=generate_bacula_sd
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
