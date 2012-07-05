@@ -11,9 +11,13 @@
 
 : ${bacula_sd_config="/usr/local/etc/bacula-sd.conf"}
 
+BACULA_HOME="/usr/pbi/bacula-server-`uname -m`"
+BACULA_DB="${BACULA_HOME}/baculaUI/bacula.db"
+BACULA_SQLITE_CMD="${BACULA_HOME}/bin/sqlite3"
+
 query_db () {
   local STATEMENT="$1"
-  ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${STATEMENT}"
+  ${BACULA_SQLITE_CMD} ${BACULA_DB} "${STATEMENT}"
 }
 
 trans_bool () {
@@ -32,7 +36,7 @@ print_sql_storage () {
 	       baculasd_st_workingdirectory,
 	       baculasd_st_piddirectory,
 	       baculasd_st_maximumconcurrentjobs
-	FROM services_baculasdstorage
+	FROM freenas_baculasdstorage
 	WHERE id = ${STORAGE_ID=$}
 	EOT
 }
@@ -66,8 +70,8 @@ print_sql_director () {
 	SELECT baculasd_dir_name,
 	       baculasd_dir_password,
 	       baculasd_dir_monitor
-	FROM services_baculasddirector           AS r,
-	     services_baculasddirectorassignment AS a
+	FROM freenas_baculasddirector           AS r,
+	     freenas_baculasddirectorassignment AS a
 	WHERE r.id = a.baculasd_map_director_id AND
 	      baculasd_map_storage_id = ${STORAGE_ID};
 	EOT
@@ -103,8 +107,8 @@ print_sql_device () {
 	       baculasd_dev_automaticmount,
 	       baculasd_dev_removablemedia,
 	       baculasd_dev_alwaysopen
-	FROM services_baculasddevice             AS r,
-	     services_baculasddeviceassignment   AS a
+	FROM freenas_baculasddevice             AS r,
+	     freenas_baculasddeviceassignment   AS a
 	WHERE r.id = a.baculasd_map_device_id AND
 	      baculasd_map_storage_id = ${STORAGE_ID};
 	EOT
@@ -149,8 +153,8 @@ print_sql_messages () {
 	       baculasd_msg_msgtype2,
 	       baculasd_msg_msgtype3,
 	       baculasd_msg_msgtypeaux
-	FROM services_baculasdmessages           AS r,
-	     services_baculasdmessagesassignment AS a
+	FROM freenas_baculasdmessages           AS r,
+	     freenas_baculasdmessagesassignment AS a
 	WHERE r.id = a.baculasd_map_messages_id AND
 	      baculasd_map_storage_id = ${STORAGE_ID};
 	EOT
@@ -224,7 +228,7 @@ print_sql_storage_id () {
 	SELECT id,
 	       baculasd_st_sdport,
 	       baculasd_st_proceeddespiteioerrors
-	FROM services_baculasdstorage
+	FROM freenas_baculasdstorage
 	EOT
 }
 
