@@ -373,3 +373,40 @@ def treemenu_icon(request):
         icon = f.read()
 
     return HttpResponse(icon, content_type='image/png')
+
+
+def devices_new(request):
+
+    if request.method == "POST":
+        form = forms.BaculaSDDeviceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse(request, message="Device added")
+        return JsonResponse(request, tpl="devices_new.html", ctx={
+            'form': form,
+        })
+    else:
+        form = forms.BaculaSDDeviceForm()
+
+    return render(request, "devices_new.html", {
+        'form': form,
+    })
+
+
+def devices_edit(request, oid):
+
+    instance = models.BaculaSDDevice.objects.get(id=oid)
+    if request.method == "POST":
+        form = forms.BaculaSDDeviceForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return JsonResponse(request, message="Device updated")
+        return JsonResponse(request, tpl="devices_edited.html", ctx={
+            'form': form,
+        })
+    else:
+        form = forms.BaculaSDDeviceForm(instance=instance)
+
+    return render(request, "devices_edit.html", {
+        'form': form,
+    })
