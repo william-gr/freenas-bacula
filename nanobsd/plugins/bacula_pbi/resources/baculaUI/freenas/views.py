@@ -1,8 +1,5 @@
 from subprocess import Popen, PIPE
 import json
-import os
-import re
-import sys
 import time
 import urllib2
 
@@ -19,7 +16,8 @@ from baculaUI.freenas import forms, models, utils
 
 
 class OAuthTransport(jsonrpclib.jsonrpc.SafeTransport):
-    def __init__(self, host, verbose=None, use_datetime=0, key=None, secret=None):
+    def __init__(self, host, verbose=None, use_datetime=0, key=None,
+            secret=None):
         jsonrpclib.jsonrpc.SafeTransport.__init__(self)
         self.verbose = verbose
         self._use_datetime = use_datetime
@@ -37,7 +35,10 @@ class OAuthTransport(jsonrpclib.jsonrpc.SafeTransport):
         params['oauth_consumer_key'] = consumer.key
         params.update(moreparams)
 
-        req = oauth.Request(method='POST', url=url, parameters=params, body=body)
+        req = oauth.Request(method='POST',
+            url=url,
+            parameters=params,
+            body=body)
         signature_method = oauth.SignatureMethod_HMAC_SHA1()
         req.sign_request(signature_method, consumer, None)
         return req
@@ -147,7 +148,9 @@ class JsonResponse(HttpResponse):
             kwargs['content'] = json.dumps(data)
             kwargs['content_type'] = 'application/json'
         else:
-            kwargs['content'] = "<html><body><textarea>"+json.dumps(data)+"</textarea></boby></html>"
+            kwargs['content'] = ("<html><body><textarea>"
+                + json.dumps(data) +
+                "</textarea></boby></html>")
         super(JsonResponse, self).__init__(*args, **kwargs)
 
     @staticmethod
@@ -167,16 +170,17 @@ def start(request):
         secret=bacula_secret)
 
     server = jsonrpclib.Server(url, transport=trans)
-    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    auth = server.plugins.is_authenticated(
+        request.COOKIES.get("sessionid", ""))
     jail = json.loads(server.plugins.jail.info())[0]
     assert auth
 
     try:
-        bacula = models.Bacula.objects.order_by('-id')[0]
+        bacula = models.BaculaSDStorage.objects.order_by('-id')[0]
         bacula.enable = True
         bacula.save()
     except IndexError:
-        bacula = models.Bacula.objects.create(enable=True)
+        bacula = models.BaculaSDStorage.objects.create(enable=True)
 
     try:
         form = forms.BaculaForm(bacula.__dict__, instance=bacula, jail=jail)
@@ -206,7 +210,8 @@ def stop(request):
         secret=bacula_secret)
 
     server = jsonrpclib.Server(url, transport=trans)
-    auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+    auth = server.plugins.is_authenticated(
+        request.COOKIES.get("sessionid", ""))
     jail = json.loads(server.plugins.jail.info())[0]
     assert auth
 
@@ -253,9 +258,10 @@ def edit(request):
     try:
         server = jsonrpclib.Server(url, transport=trans)
         jail = json.loads(server.plugins.jail.info())[0]
-        auth = server.plugins.is_authenticated(request.COOKIES.get("sessionid", ""))
+        auth = server.plugins.is_authenticated(
+            request.COOKIES.get("sessionid", ""))
         assert auth
-    except Exception, e:
+    except Exception:
         raise
 
     if request.method == "GET":
@@ -273,7 +279,9 @@ def edit(request):
         jail=jail)
     if form.is_valid():
         form.save()
-        return JsonResponse(request, error=True, message="Bacula settings successfully saved.")
+        return JsonResponse(request,
+            error=True,
+            message="Bacula settings successfully saved.")
 
     return JsonResponse(request, form=form)
 
@@ -287,12 +295,44 @@ def treemenu(request):
     """
 
     plugin = {
-        'name': 'Bacula',
+        'name': 'Bacula Storage',
         'append_to': 'services.PluginsJail',
         'icon': reverse('treemenu_icon'),
         'type': 'pluginsfcgi',
         'url': reverse('bacula_edit'),
         'kwargs': {'plugin_name': 'bacula'},
+        'children': [
+            {
+                'name': 'Assignments',
+                'children': [
+                    {
+                        'name': 'Add Assignment',
+                        'type': 'pluginsfcgi',
+                        'url': reverse('bacula_edit'),
+                    },
+                    {
+                        'name': 'View Assignments',
+                        'type': 'pluginsfcgi',
+                        'url': reverse('bacula_edit'),
+                    },
+                ],
+            },
+            {
+                'name': 'Resources',
+                'children': [
+                    {
+                        'name': 'Add Resource',
+                        'type': 'pluginsfcgi',
+                        'url': reverse('bacula_edit'),
+                    },
+                    {
+                        'name': 'View Resources',
+                        'type': 'pluginsfcgi',
+                        'url': reverse('bacula_edit'),
+                    },
+                ],
+            },
+        ],
     }
 
     return HttpResponse(json.dumps([plugin]), content_type='application/json')
