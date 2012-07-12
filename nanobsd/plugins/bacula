@@ -46,7 +46,7 @@ export PLUGINPORTSDIR
 #
 # Path to port directory
 #
-PLUGINPORT="${PLUGINPORTSDIR}/net-p2p/bacula-daemon"
+PLUGINPORT="${PLUGINPORTSDIR}/sysutils/bacula-server"
 if [ ! -d "${PLUGINPORT}" ]
 then
 	echo "${PLUGIN}: ${PLUGINPORT} does not exist!"
