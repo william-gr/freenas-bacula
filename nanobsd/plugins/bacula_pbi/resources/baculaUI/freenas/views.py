@@ -251,9 +251,9 @@ def edit(request):
     If it does not exist create a new entry
     """
     try:
-        bacula = models.Bacula.objects.order_by('-id')[0]
+        bacula = models.BaculaSDStorage.objects.order_by('-id')[0]
     except IndexError:
-        bacula = models.Bacula.objects.create()
+        bacula = models.BaculaSDStorage.objects.create()
 
     try:
         server = jsonrpclib.Server(url, transport=trans)
@@ -265,7 +265,7 @@ def edit(request):
         raise
 
     if request.method == "GET":
-        form = forms.BaculaForm(instance=bacula,
+        form = forms.BaculaSDStorageForm(instance=bacula,
             jail=jail)
         return render(request, "edit.html", {
             'form': form,
@@ -274,7 +274,7 @@ def edit(request):
     if not request.POST:
         return JsonResponse(request, error=True, message="A problem occurred.")
 
-    form = forms.BaculaForm(request.POST,
+    form = forms.BaculaSDStorageForm(request.POST,
         instance=bacula,
         jail=jail)
     if form.is_valid():
@@ -434,7 +434,7 @@ def devices_edit(request, oid):
     })
 
 
-def diretors_new(request):
+def directors_new(request):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)

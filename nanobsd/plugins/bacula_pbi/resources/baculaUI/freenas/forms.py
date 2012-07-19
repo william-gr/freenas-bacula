@@ -11,6 +11,10 @@ from baculaUI.freenas import models, utils
 
 class BaculaSDStorageForm(forms.ModelForm):
 
+    def __init__(self, *args, **kwargs):
+        self.jail = kwargs.pop('jail')
+        super(BaculaSDStorageForm, self).__init__(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         obj = super(BaculaSDStorageForm, self).save(*args, **kwargs)
         #started = notifier().reload("baculasd")
