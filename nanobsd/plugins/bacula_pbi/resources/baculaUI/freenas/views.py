@@ -324,6 +324,21 @@ def treemenu(request):
             'url': reverse('bacula_directors_new'),
     })
 
+    directorassigns = []
+    for obj in models.BaculaSDDirectorAssignment.objects.all():
+        directorassigns.append({
+            'name': unicode(obj),
+            'type': 'pluginsfcgi',
+            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director_map.png'}),
+            'url': reverse('bacula_directorassigns_edit', kwargs={'oid': obj.id}),
+            })
+    directorassigns.append({
+        'name': 'Add Director Assignment',
+        'type': 'pluginsfcgi',
+        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_director_map.png'}),
+            'url': reverse('bacula_directorassigns_new'),
+    })
+
     devices = []
     for obj in models.BaculaSDDevice.objects.all():
         devices.append({
@@ -400,6 +415,11 @@ def treemenu(request):
                 'name': 'Directors',
                 'children': directors,
                 'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director.png'}),
+            },
+            {
+                'name': 'Director Assignments',
+                'children': directorassigns,
+                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director_map.png'}),
             },
             {
                 'name': 'Devices',
@@ -644,6 +664,67 @@ def directors_edit(request, oid):
 
 
 def directors_view(request):
+    return render(request, "devices_view.html", {})
+
+
+def directorassigns_new(request):
+
+    bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=bacula_key,
+        secret=bacula_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+
+    jail = json.loads(server.plugins.jail.info())[0]
+    if request.method == "POST":
+        form = forms.BaculaSDDirectorAssignmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse(request,
+                message="Director assignment added",
+                events=["refreshTree()"],
+            )
+        return JsonResponse(request, tpl="directorassigns_new.html", ctx={
+            'form': form,
+        })
+    else:
+        form = forms.BaculaSDDirectorAssignmentForm()
+
+    return render(request, "directorassigns_new.html", {
+        'form': form,
+    })
+
+
+def directorassigns_edit(request, oid):
+
+    bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=bacula_key,
+        secret=bacula_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+
+    jail = json.loads(server.plugins.jail.info())[0]
+    instance = models.BaculaSDDirectorAssignment.objects.get(id=oid)
+    if request.method == "POST":
+        form = forms.BaculaSDDirectorAssignmentForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return JsonResponse(request,
+                message="Director assignment updated",
+                events=["refreshTree()"],
+                )
+        return JsonResponse(request, tpl="directorassigns_edit.html", ctx={
+            'form': form,
+        })
+    else:
+        form = forms.BaculaSDDirectorAssignmentForm(instance=instance)
+
+    return render(request, "directorassigns_edit.html", {
+        'form': form,
+    })
+
+
+def directorassigns_view(request):
     return render(request, "devices_view.html", {})
 
 
