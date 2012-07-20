@@ -315,7 +315,7 @@ def treemenu(request):
             'name': unicode(obj),
             'type': 'pluginsfcgi',
             'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director.png'}),
-            'url': reverse('bacula_daemons_edit', kwargs={'oid': obj.id}),
+            'url': reverse('bacula_directors_edit', kwargs={'oid': obj.id}),
             })
     directors.append({
         'name': 'Add Director',
@@ -330,7 +330,7 @@ def treemenu(request):
             'name': unicode(obj),
             'type': 'pluginsfcgi',
             'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_device.png'}),
-            'url': reverse('bacula_daemons_edit', kwargs={'oid': obj.id}),
+            'url': reverse('bacula_devices_edit', kwargs={'oid': obj.id}),
             })
     devices.append({
         'name': 'Add Device',
@@ -477,7 +477,10 @@ def devices_new(request):
         form = forms.BaculaSDDeviceForm(request.POST, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Device added")
+            return JsonResponse(request,
+                message="Device added",
+                events=["refreshTree()"],
+                )
         return JsonResponse(request, tpl="devices_new.html", ctx={
             'form': form,
         })
@@ -507,7 +510,10 @@ def devices_edit(request, oid):
         form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Device assignment updated")
+            return JsonResponse(request,
+                message="Device assignment updated",
+                events=["refreshTree()"],
+                )
         return JsonResponse(request, tpl="devices_edit.html", ctx={
             'form': form,
         })
@@ -532,7 +538,10 @@ def deviceassigns_new(request):
         form = forms.BaculaSDDeviceAssignmentForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Device assignment added")
+            return JsonResponse(request,
+                message="Device assignment added",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="deviceassigns_new.html", ctx={
             'form': form,
         })
@@ -562,7 +571,10 @@ def deviceassigns_edit(request, oid):
         form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Device updated")
+            return JsonResponse(request,
+                message="Device updated",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="deviceassigns_edit.html", ctx={
             'form': form,
         })
@@ -587,7 +599,10 @@ def directors_new(request):
         form = forms.BaculaSDDirectorForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Director added")
+            return JsonResponse(request,
+                message="Director added",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="directors_new.html", ctx={
             'form': form,
         })
@@ -608,12 +623,15 @@ def directors_edit(request, oid):
     server = jsonrpclib.Server(url, transport=trans)
 
     jail = json.loads(server.plugins.jail.info())[0]
-    instance = models.BaculaSDDirectorAssignment.objects.get(id=oid)
+    instance = models.BaculaSDDirector.objects.get(id=oid)
     if request.method == "POST":
         form = forms.BaculaSDDirectorForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Director updated")
+            return JsonResponse(request,
+                message="Director updated",
+                events=["refreshTree()"],
+                )
         return JsonResponse(request, tpl="directors_edit.html", ctx={
             'form': form,
         })
@@ -642,7 +660,10 @@ def daemons_new(request):
         form = forms.BaculaSDStorageForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Daemon added")
+            return JsonResponse(request,
+                message="Daemon added",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="daemons_new.html", ctx={
             'form': form,
         })
@@ -668,7 +689,10 @@ def daemons_edit(request, oid):
         form = forms.BaculaSDStorageForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Daemon updated")
+            return JsonResponse(request,
+                message="Daemon updated",
+                events=["refreshTree()"],
+                )
         return JsonResponse(request, tpl="daemons_edit.html", ctx={
             'form': form,
         })
@@ -697,7 +721,10 @@ def messages_new(request):
         form = forms.BaculaSDMessagesForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Message added")
+            return JsonResponse(request,
+                message="Message added",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="messages_new.html", ctx={
             'form': form,
         })
@@ -727,7 +754,10 @@ def messages_edit(request, oid):
         form = forms.BaculaSDMessagesForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Message updated")
+            return JsonResponse(request,
+                message="Message updated",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="messages_edit.html", ctx={
             'form': form,
         })
@@ -752,7 +782,10 @@ def messagesassigns_new(request):
         form = forms.BaculaSDMessagesAssignmentForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Message added")
+            return JsonResponse(request,
+                message="Message added",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="messagesassigns_new.html", ctx={
             'form': form,
         })
@@ -782,7 +815,10 @@ def messagesassigns_edit(request, oid):
         form = forms.BaculaSDMessagesAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
-            return JsonResponse(request, message="Message updated")
+            return JsonResponse(request,
+                message="Message updated",
+                events=["refreshTree()"],
+            )
         return JsonResponse(request, tpl="messagesassigns_edit.html", ctx={
             'form': form,
         })
