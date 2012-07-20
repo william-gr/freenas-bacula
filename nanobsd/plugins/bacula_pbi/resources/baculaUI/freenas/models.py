@@ -5,12 +5,14 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from baculaUI import choices
 
 
+class BaculaSDService(models.Model):
+    enable = models.BooleanField(default=False)
+
 class BaculaSDStorage(models.Model):
     """
     Django model describing every tunable setting for bacula
     """
 
-    enable = models.BooleanField(default=False)
     baculasd_st_name = models.CharField(
             default="freenas-sd",
             help_text=_("Specifies the Name of the Storage daemon. This "
@@ -37,6 +39,13 @@ class BaculaSDStorage(models.Model):
             verbose_name=_("Proceed despite I/O errors"),
             )
 
+    def __unicode__(self):
+        return self.baculasd_st_name
+
+    class Meta:
+        verbose_name = _("Storage Daemon")
+        verbose_name_plural = _("Storage Daemons")
+
 
 class BaculaSDDirector(models.Model):
     baculasd_dir_name = models.CharField(
@@ -62,6 +71,9 @@ class BaculaSDDirector(models.Model):
                 "current status of this Storage daemon."),
             verbose_name=_("Monitor"),
             )
+
+    def __unicode__(self):
+        return self.baculasd_dir_name
 
     class Meta:
         verbose_name = _("Director")

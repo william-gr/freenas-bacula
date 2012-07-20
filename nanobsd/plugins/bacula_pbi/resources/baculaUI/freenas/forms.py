@@ -9,10 +9,29 @@ from dojango import forms
 from baculaUI.freenas import models, utils
 
 
+class BaculaSDServiceForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BaculaSDStorageForm, self).__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        obj = super(BaculaSDStorageForm, self).save(*args, **kwargs)
+        #started = notifier().reload("baculasd")
+        #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
+        #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+
+        return obj
+
+    class Meta:
+        model = models.BaculaSDStorage
+        widgets = {
+            'baculasd_st_sdport': forms.widgets.TextInput(),
+        }
+
+
 class BaculaSDStorageForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
-        self.jail = kwargs.pop('jail')
         super(BaculaSDStorageForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
