@@ -33,8 +33,8 @@ print_sql_storage () {
   cat <<- EOT
 	SELECT baculasd_st_name,
 	       baculasd_st_sdport,
-	       baculasd_st_workingdirectory,
-	       baculasd_st_piddirectory,
+	       '/usr/pbi',
+	       '/var/run',
 	       baculasd_st_maximumconcurrentjobs
 	FROM freenas_baculasdstorage
 	WHERE id = ${STORAGE_ID=$}
@@ -89,7 +89,7 @@ print_director_stanzas () {
     do
       echo 'Director {'
       [ ${NAME}     ] && echo "  Name = ${NAME}"
-      [ ${PASSWORD} ] && echo "  Password = ${PASSWORD}"
+      [ ${PASSWORD} ] && echo "  Password = \"${PASSWORD}\""
       [ ${MONITOR}  ] && echo "  Monitor  = $(trans_bool ${MONITOR})"
       echo '}'
     done
@@ -104,7 +104,7 @@ print_sql_device () {
 	       baculasd_dev_archivedevice,
 	       baculasd_dev_labelmedia,
 	       baculasd_dev_randomaccess,
-	       baculasd_dev_automaticmount,
+	       0,
 	       baculasd_dev_removablemedia,
 	       baculasd_dev_alwaysopen
 	FROM freenas_baculasddevice             AS r,
@@ -252,7 +252,7 @@ generate_bacula_sd()
                BACULA_SD_PID \
                PROCEED_IOERR
     do
-      BACULA_SD_CFG=/usr/local/etc/bacula-sd.${BACULA_SD_PID}.conf
+      BACULA_SD_CFG=${BACULA_HOME}/etc/bacula-sd.${BACULA_SD_PID}.conf
 
       if [ $PROCEED_IOERR -eq 1 ]
       then P_FLAG=" -p"

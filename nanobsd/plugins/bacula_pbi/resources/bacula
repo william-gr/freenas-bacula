@@ -1,66 +1,62 @@
 #!/bin/sh
 #
-# $FreeBSD: ports/net-p2p/transmission-cli/files/transmission.in,v 1.4 2011/03/05 04:17:28 mezz Exp $
+# PROVIDE: bacula
+# REQUIRE: DAEMON
 #
-# PROVIDE: transmission
-# REQUIRE: DAEMON 
-#
-# Add the following lines to /etc/rc.conf to enable this service:
-#
-# transmission_enable:	     Set to NO by default. Set it to YES to enable it.
-# transmission_watch_dir:    Directory for torrent files to download
-#			     automatically. Off by default unless you add
-#			     a path.
-# transmission_conf_dir:     Directory where transmission configuration
-#			     data is stored.
-#			     Default: /usr/pbi/transmission-$(uname -m)/etc/transmission/home
-# transmission_download_dir: Directory to store downloaded data.
-#			     Default: /usr/pbi/transmission-$(uname -m)/etc/transmission/home/Downloads
-# transmission_user:	     The user account transmission daemon runs as what
-#			     you want it to be. It uses 'transmission' user by
-#			     default. Do not sets it as empty or it will run
-#			     as root.
-#
-
 . /etc/rc.subr
 
-name="transmission"
+name="bacula"
 rcvar=${name}_enable
 
-pidfile=/usr/pbi/transmission-$(uname -m)/etc/transmission/transmission.pid
-command=/usr/local/bin/transmission-daemon
+BACULA_PATH=/usr/pbi/bacula-server-$(uname -m)
+BACULA_DB=${BACULA_PATH}/baculaUI/bacula.db
+BACULA_SD=${BACULA_PATH}/sbin/bacula-sd
+SQLITE3=${BACULA_PATH}/bin/sqlite3
+command=/usr/local/bin/bacula-daemon
 
 load_rc_config ${name}
 
-: ${transmission_enable:="NO"}
-: ${transmission_user:="transmission"}
-: ${transmission_conf_dir="/usr/pbi/transmission-$(uname -m)/etc/transmission/home"}
-: ${transmission_download_dir="/usr/pbi/transmission-$(uname -m)/etc/transmission/home/Downloads"}
+: ${bacula_enable:="NO"}
 
-transmission_flags=" \
-	${transmission_watch_dir:+-c ${transmission_watch_dir}} \
-	${transmission_conf_dir:+-g ${transmission_conf_dir}} \
-	${transmission_download_dir:+-w ${transmission_download_dir}} \
-	-x ${pidfile} \
-	${transmission_flags}"
-
-transmission_stop()
+bacula_stop()
 {
-	res=1
-	echo -n 'Stopping transmission.'
-	if [ -f "${pidfile}" ]
-	then
-		kill -KILL $(cat "${pidfile}")
-		rm -f ${pidfile}
-		res=$?
-	else
-		killall -KILL transmission-daemon
-		res=$?
-	fi
+	local port pidfile res restmp
+	res=0
+	echo -n 'Stopping bacula.'
+
+	${SQLITE3} ${BACULA_DB} "SELECT
+			baculasd_st_sdport
+	 	FROM freenas_baculasdstorage" | \
+	while read -r port; do
+		pidfile=/var/run/bacula-sd.${port}.pid
+		if [ -f "${pidfile}" ]
+		then
+			kill -KILL $(cat "${pidfile}")
+			res=$((${res}+$?))
+			rm -f ${pidfile}
+		else
+			killall -KILL bacula-sd
+			res=$((${res}+$?))
+		fi
+	done
 
 	echo
 	return ${res}
 }
 
-stop_cmd='transmission_stop'
+bacula_start()
+{
+
+	local port
+	${SQLITE3} ${BACULA_DB} "SELECT
+			baculasd_st_sdport
+	 	FROM freenas_baculasdstorage" | \
+	while read -r port; do
+		${BACULA_SD} -c ${BACULA_PATH}/etc/bacula-sd.${port}.conf
+	done
+
+}
+
+stop_cmd='bacula_stop'
+start_cmd='bacula_start'
 run_rc_command "$1"
