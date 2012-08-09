@@ -1,10 +1,9 @@
 #!/bin/sh
 #########################################
 
-bacula_rc=/usr/local/bin/bacula-daemon
-bacula_pbi_path=/usr/pbi/bacula-$(uname -m)/
+bacula_pbi_path=/usr/pbi/bacula-server-$(uname -m)/
 
-mv ${bacula_pbi_path}/bacula /usr/local/etc/rc.d/
+cp ${bacula_pbi_path}/bacula ${bacula_pbi_path}/ix-bacula-sd /usr/local/etc/rc.d/
 
 pw group add bacula
 pw user add bacula -g bacula -d ${bacula_pbi_path}/etc/bacula/home
