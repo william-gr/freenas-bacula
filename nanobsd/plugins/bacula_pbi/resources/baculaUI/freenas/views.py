@@ -216,14 +216,14 @@ def stop(request):
     assert auth
 
     try:
-        bacula = models.Bacula.objects.order_by('-id')[0]
+        bacula = models.BaculaSDStorage.objects.order_by('-id')[0]
         bacula.enable = False
         bacula.save()
     except IndexError:
-        bacula = models.Bacula.objects.create(enable=False)
+        bacula = models.BaculaSDStorage.objects.create(enable=False)
 
     try:
-        form = forms.BaculaForm(bacula.__dict__, instance=bacula, jail=jail)
+        form = forms.BaculaSDStorageForm(bacula.__dict__, instance=bacula)
         form.is_valid()
         form.save()
     except ValueError:
