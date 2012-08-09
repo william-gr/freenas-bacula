@@ -459,7 +459,7 @@ def status(request):
     """
     pid = None
 
-    proc = Popen(["/usr/bin/pgrep", "bacula-daemon"], stdout=PIPE, stderr=PIPE)
+    proc = Popen(["/usr/bin/pgrep", "bacula-sd"], stdout=PIPE, stderr=PIPE)
 
     stdout = proc.communicate()[0]
 
