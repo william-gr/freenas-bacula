@@ -11,7 +11,7 @@
 
 : ${bacula_sd_config="/usr/local/etc/bacula-sd.conf"}
 
-BACULA_HOME="/usr/pbi/bacula-server-`uname -m`"
+BACULA_HOME="/usr/pbi/bacula-sd-`uname -m`"
 BACULA_DB="${BACULA_HOME}/baculaUI/bacula.db"
 BACULA_SQLITE_CMD="${BACULA_HOME}/bin/sqlite3"
 

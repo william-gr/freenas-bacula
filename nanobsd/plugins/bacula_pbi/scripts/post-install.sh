@@ -1,7 +1,7 @@
 #!/bin/sh
 #########################################
 
-bacula_pbi_path=/usr/pbi/bacula-server-$(uname -m)/
+bacula_pbi_path=/usr/pbi/bacula-sd-$(uname -m)/
 
 cp ${bacula_pbi_path}/bacula ${bacula_pbi_path}/ix-bacula-sd /usr/local/etc/rc.d/
 

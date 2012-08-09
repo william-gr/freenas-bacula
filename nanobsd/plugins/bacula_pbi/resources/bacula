@@ -8,7 +8,7 @@
 name="bacula"
 rcvar=${name}_enable
 
-BACULA_PATH=/usr/pbi/bacula-server-$(uname -m)
+BACULA_PATH=/usr/pbi/bacula-sd-$(uname -m)
 BACULA_DB=${BACULA_PATH}/baculaUI/bacula.db
 BACULA_SD=${BACULA_PATH}/sbin/bacula-sd
 SQLITE3=${BACULA_PATH}/bin/sqlite3
@@ -48,6 +48,7 @@ bacula_start()
 {
 
 	local port
+	service ix-bacula-sd start
 	${SQLITE3} ${BACULA_DB} "SELECT
 			baculasd_st_sdport
 	 	FROM freenas_baculasdstorage" | \
