@@ -7,6 +7,7 @@
             });
     </script>
 <table>
+  {% if form %}
   {% block form %}
     {{ form }}
   {% endblock %}
@@ -14,32 +15,22 @@
         <td>&nbsp;</td>
         <td>&nbsp;</td>
     </tr>
+  {% else %}
+    Are you sure you want to delete?
+  {% endif %}
     <tr>
         <td colspan="2">
   {% block buttons %}
             <button data-dojo-type="dijit.form.Button" type="submit"
                 data-dojo-props="type:'submit'" class="submitform">
-                OK
+                Yes
             </button>
             <button data-dojo-type="dijit.form.Button" type="button">
-                Cancel
+                No
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                     cancelDialog(this);
                 </script>
             </button>
-            {% if form.instance.id %}
-            <button data-dojo-type="dijit.form.Button" type="button">
-                Delete
-                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    var rnode = getDialog(this);
-                    dojo.xhrGet({
-                        url: '{{ delete_url }}',
-                        handleAs: 'text',
-                        load: function(data) { rnode.set('content', data); }
-                     });
-                </script>
-            </button>
-            {% endif %}
   {% endblock %}
         </td>
     </tr>

@@ -162,6 +162,28 @@ class JsonResponse(HttpResponse):
         return field
 
 
+def _generic_delete(request, oid, model):
+
+    bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=bacula_key,
+        secret=bacula_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+
+    jail = json.loads(server.plugins.jail.info())[0]
+    instance = model.objects.get(id=oid)
+    if request.method == "POST":
+        instance.delete()
+        return JsonResponse(request,
+            message="%s deleted" % (model._meta.verbose_name, ),
+            events=["refreshTree()"],
+            )
+
+    return render(request, "generic_delete.html", {
+        'instance': instance,
+    })
+
+
 def start(request):
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
 
@@ -526,6 +548,7 @@ def devices_edit(request, oid):
 
     jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDDevice.objects.get(id=oid)
+    delete_url = reverse('bacula_devices_delete', kwargs={'oid': instance.id})
     if request.method == "POST":
         form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail=jail)
         if form.is_valid():
@@ -536,13 +559,19 @@ def devices_edit(request, oid):
                 )
         return JsonResponse(request, tpl="devices_edit.html", ctx={
             'form': form,
+            'delete_url': delete_url,
         })
     else:
         form = forms.BaculaSDDeviceForm(instance=instance, jail=jail)
 
     return render(request, "devices_edit.html", {
         'form': form,
+        'delete_url': delete_url,
     })
+
+
+def devices_delete(request, oid):
+    return _generic_delete(request, oid, model=models.BaculaSDDevice)
 
 
 def deviceassigns_new(request):
@@ -587,6 +616,7 @@ def deviceassigns_edit(request, oid):
 
     jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDDeviceAssignment.objects.get(id=oid)
+    delete_url = reverse('bacula_deviceassigns_delete', kwargs={'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDDeviceAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
@@ -597,13 +627,19 @@ def deviceassigns_edit(request, oid):
             )
         return JsonResponse(request, tpl="deviceassigns_edit.html", ctx={
             'form': form,
+            'delete_url': delete_url,
         })
     else:
         form = forms.BaculaSDDeviceAssignmentForm(instance=instance)
 
     return render(request, "deviceassigns_edit.html", {
         'form': form,
+        'delete_url': delete_url,
     })
+
+
+def deviceassigns_delete(request, oid):
+    return _generic_delete(request, oid, model=models.BaculaSDDeviceAssignment)
 
 
 def directors_new(request):
@@ -644,6 +680,7 @@ def directors_edit(request, oid):
 
     jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDDirector.objects.get(id=oid)
+    delete_url = reverse('bacula_directors_delete', kwargs={'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDDirectorForm(request.POST, instance=instance)
         if form.is_valid():
@@ -654,17 +691,23 @@ def directors_edit(request, oid):
                 )
         return JsonResponse(request, tpl="directors_edit.html", ctx={
             'form': form,
+            'delete_url': delete_url,
         })
     else:
         form = forms.BaculaSDDirectorForm(instance=instance)
 
     return render(request, "directors_edit.html", {
         'form': form,
+        'delete_url': delete_url,
     })
 
 
 def directors_view(request):
     return render(request, "devices_view.html", {})
+
+
+def directors_delete(request, oid):
+    return _generic_delete(request, oid, model=models.BaculaSDDirector)
 
 
 def directorassigns_new(request):
@@ -705,6 +748,7 @@ def directorassigns_edit(request, oid):
 
     jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDDirectorAssignment.objects.get(id=oid)
+    delete_url = reverse('bacula_directorassigns_delete', kwargs={'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDDirectorAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
@@ -715,17 +759,23 @@ def directorassigns_edit(request, oid):
                 )
         return JsonResponse(request, tpl="directorassigns_edit.html", ctx={
             'form': form,
+            'delete_url': delete_url,
         })
     else:
         form = forms.BaculaSDDirectorAssignmentForm(instance=instance)
 
     return render(request, "directorassigns_edit.html", {
         'form': form,
+        'delete_url': delete_url,
     })
 
 
 def directorassigns_view(request):
     return render(request, "devices_view.html", {})
+
+
+def directorassigns_delete(request, oid):
+    return _generic_delete(request, oid, model=models.BaculaSDDirectorAssignment)
 
 
 def daemons_new(request):
@@ -766,6 +816,7 @@ def daemons_edit(request, oid):
 
     jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDStorage.objects.get(id=oid)
+    delete_url = reverse('bacula_daemons_delete', kwargs={'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDStorageForm(request.POST, instance=instance)
         if form.is_valid():
@@ -776,17 +827,23 @@ def daemons_edit(request, oid):
                 )
         return JsonResponse(request, tpl="daemons_edit.html", ctx={
             'form': form,
+            'delete_url': delete_url,
         })
     else:
         form = forms.BaculaSDStorageForm(instance=instance)
 
     return render(request, "daemons_edit.html", {
         'form': form,
+        'delete_url': delete_url,
     })
 
 
 def daemons_view(request):
     return render(request, "daemons_view.html", {})
+
+
+def daemons_delete(request, oid):
+    return _generic_delete(request, oid, model=models.BaculaSDStorage)
 
 
 def messages_new(request):
@@ -831,6 +888,7 @@ def messages_edit(request, oid):
 
     jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDMessages.objects.get(id=oid)
+    delete_url = reverse('bacula_messages_delete', kwargs={'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDMessagesForm(request.POST, instance=instance)
         if form.is_valid():
@@ -841,13 +899,19 @@ def messages_edit(request, oid):
             )
         return JsonResponse(request, tpl="messages_edit.html", ctx={
             'form': form,
+            'delete_url': delete_url,
         })
     else:
         form = forms.BaculaSDMessagesForm(instance=instance)
 
     return render(request, "messages_edit.html", {
         'form': form,
+        'delete_url': delete_url,
     })
+
+
+def messages_delete(request, oid):
+    return _generic_delete(request, oid, model=models.BaculaSDMessages)
 
 
 def messagesassigns_new(request):
@@ -892,6 +956,7 @@ def messagesassigns_edit(request, oid):
 
     jail = json.loads(server.plugins.jail.info())[0]
     instance = models.BaculaSDMessagesAssignment.objects.get(id=oid)
+    delete_url = reverse('bacula_messagesassigns_delete', kwargs={'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDMessagesAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
@@ -902,10 +967,16 @@ def messagesassigns_edit(request, oid):
             )
         return JsonResponse(request, tpl="messagesassigns_edit.html", ctx={
             'form': form,
+            'delete_url': delete_url,
         })
     else:
         form = forms.BaculaSDMessagesAssignmentForm(instance=instance)
 
     return render(request, "messagesassigns_edit.html", {
         'form': form,
+        'delete_url': delete_url,
     })
+
+
+def messagesassigns_delete(request, oid):
+    return _generic_delete(request, oid, model=models.BaculaSDMessagesAssignment)
