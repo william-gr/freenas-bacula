@@ -586,20 +586,20 @@ def deviceassigns_edit(request, oid):
     server = jsonrpclib.Server(url, transport=trans)
 
     jail = json.loads(server.plugins.jail.info())[0]
-    instance = models.BaculaSDDevice.objects.get(id=oid)
+    instance = models.BaculaSDDeviceAssignment.objects.get(id=oid)
     if request.method == "POST":
-        form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail=jail)
+        form = forms.BaculaSDDeviceAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
             return JsonResponse(request,
-                message="Device updated",
+                message="Device assignment updated",
                 events=["refreshTree()"],
             )
         return JsonResponse(request, tpl="deviceassigns_edit.html", ctx={
             'form': form,
         })
     else:
-        form = forms.BaculaSDDeviceForm(instance=instance, jail=jail)
+        form = forms.BaculaSDDeviceAssignmentForm(instance=instance)
 
     return render(request, "deviceassigns_edit.html", {
         'form': form,
