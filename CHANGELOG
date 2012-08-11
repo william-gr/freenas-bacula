@@ -1,0 +1,14 @@
+0.1-BETA2
+======================
+
+    - Add initial migration
+    - Fix service start/stop, there was some logic missing
+    - Write rc.conf on bacula start/stop
+    - Add delete buttons
+    - Fix device assignment edit screen
+    - Workaround install environment bug in 8.2.0
+
+0.1-BETA1
+======================
+
+    - First public release of the plugin for FreeNAS 8.2
