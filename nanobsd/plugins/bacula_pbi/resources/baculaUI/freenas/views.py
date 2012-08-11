@@ -425,7 +425,7 @@ def treemenu(request):
     plugin = {
         'name': 'Bacula Storage',
         'append_to': 'services.PluginsJail',
-        'icon': reverse('treemenu_icon'),
+        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula.png'}),
         'type': 'pluginsfcgi',
         'url': reverse('bacula_edit'),
         'children': [
