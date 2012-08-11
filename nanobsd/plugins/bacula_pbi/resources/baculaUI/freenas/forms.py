@@ -12,21 +12,24 @@ from baculaUI.freenas import models, utils
 class BaculaSDServiceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(BaculaSDStorageForm, self).__init__(*args, **kwargs)
+        super(BaculaSDServiceForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        obj = super(BaculaSDStorageForm, self).save(*args, **kwargs)
+        obj = super(BaculaSDServiceForm, self).save(*args, **kwargs)
         #started = notifier().reload("baculasd")
         #if started is False and models.services.objects.get(srv_service = 'baculasd').srv_enable:
         #    raise ServiceFailed("baculasd", _("The Bacula Storage Daemon failed to reload."))
+        rcconf = os.path.join(utils.bacula_etc_path, "rc.conf")
+        with open(rcconf, "w") as f:
+            if obj.enable:
+                f.write('bacula_enable="YES"\n')
+
+        os.system(os.path.join(utils.bacula_pbi_path, "tweak-rcconf"))
 
         return obj
 
     class Meta:
-        model = models.BaculaSDStorage
-        widgets = {
-            'baculasd_st_sdport': forms.widgets.TextInput(),
-        }
+        model = models.BaculaSDService
 
 
 class BaculaSDStorageForm(forms.ModelForm):
@@ -59,12 +62,6 @@ class BaculaSDStorageForm(forms.ModelForm):
                 advanced_settings[field.attname] = "%s %s" % (info["opt"], value)
         """
 
-        rcconf = os.path.join(utils.bacula_etc_path, "rc.conf")
-        with open(rcconf, "w") as f:
-            if obj.enable:
-                f.write('bacula_enable="YES"\n')
-
-        os.system(os.path.join(utils.bacula_pbi_path, "tweak-rcconf"))
         return obj
 
     class Meta:

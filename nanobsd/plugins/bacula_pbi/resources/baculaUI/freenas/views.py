@@ -198,17 +198,18 @@ def start(request):
     assert auth
 
     try:
-        bacula = models.BaculaSDStorage.objects.order_by('-id')[0]
+        bacula = models.BaculaSDService.objects.order_by('-id')[0]
         bacula.enable = True
         bacula.save()
     except IndexError:
-        bacula = models.BaculaSDStorage.objects.create(enable=True)
+        bacula = models.BaculaSDService.objects.create(enable=True)
 
     try:
-        form = forms.BaculaSDStorageForm(bacula.__dict__, instance=bacula)
+        form = forms.BaculaSDServiceForm(bacula.__dict__, instance=bacula)
         form.is_valid()
         form.save()
     except ValueError:
+        raise
         return HttpResponse(simplejson.dumps({
             'error': True,
             'message': 'Bacula data did not validate, configure it first.',
@@ -238,14 +239,14 @@ def stop(request):
     assert auth
 
     try:
-        bacula = models.BaculaSDStorage.objects.order_by('-id')[0]
+        bacula = models.BaculaSDService.objects.order_by('-id')[0]
         bacula.enable = False
         bacula.save()
     except IndexError:
-        bacula = models.BaculaSDStorage.objects.create(enable=False)
+        bacula = models.BaculaSDService.objects.create(enable=False)
 
     try:
-        form = forms.BaculaSDStorageForm(bacula.__dict__, instance=bacula)
+        form = forms.BaculaSDServiceForm(bacula.__dict__, instance=bacula)
         form.is_valid()
         form.save()
     except ValueError:
