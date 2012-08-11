@@ -57,33 +57,14 @@ class BaculaSDStorageForm(forms.ModelForm):
 
             elif info["type"] == "textbox" and value:
                 advanced_settings[field.attname] = "%s %s" % (info["opt"], value)
+        """
 
         rcconf = os.path.join(utils.bacula_etc_path, "rc.conf")
         with open(rcconf, "w") as f:
             if obj.enable:
                 f.write('bacula_enable="YES"\n')
 
-            if obj.watch_dir:
-                f.write('bacula_watch_dir="%s"\n' % (obj.watch_dir, ))
-
-            if obj.conf_dir:
-                f.write('bacula_conf_dir="%s"\n' % (obj.conf_dir, ))
-
-            if obj.download_dir:
-                f.write('bacula_download_dir="%s"\n' % (obj.download_dir, ))
-
-            bacula_flags = ""
-            for value in advanced_settings.values():
-                bacula_flags += value + " "
-            f.write('bacula_flags="%s"\n' % (bacula_flags, ))
-
-        try:
-            user_ids = pwd.getpwnam("bacula")[2:4]
-        except:
-            user_ids = None
-
         os.system(os.path.join(utils.bacula_pbi_path, "tweak-rcconf"))
-        """
         return obj
 
     class Meta:

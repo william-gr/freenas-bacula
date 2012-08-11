@@ -1,6 +1,6 @@
 #!/bin/sh
 
-bacula_path=/usr/pbi/bacula-$(uname -m)
+bacula_path=/usr/pbi/bacula-sd-$(uname -m)
 tmpfile=$(mktemp /tmp/.XXXXXX)
 
 grep -v 'bacula_' /etc/rc.conf > ${tmpfile}
