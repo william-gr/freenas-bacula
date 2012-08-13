@@ -555,7 +555,7 @@ def devices_edit(request, oid):
         if form.is_valid():
             form.save()
             return JsonResponse(request,
-                message="Device assignment updated",
+                message="Device updated",
                 events=["refreshTree()"],
                 )
         return JsonResponse(request, tpl="devices_edit.html", ctx={
@@ -963,7 +963,7 @@ def messagesassigns_edit(request, oid):
         if form.is_valid():
             form.save()
             return JsonResponse(request,
-                message="Message updated",
+                message="Message assignment updated",
                 events=["refreshTree()"],
             )
         return JsonResponse(request, tpl="messagesassigns_edit.html", ctx={
