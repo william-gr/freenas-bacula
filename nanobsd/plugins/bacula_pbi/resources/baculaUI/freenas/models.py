@@ -23,7 +23,8 @@ class BaculaSDStorage(models.Model):
             )
     baculasd_st_sdport = models.IntegerField(
             default=9103,
-            help_text=_("Maximum number of Jobs that may run concurrently."),
+            help_text=_("Port number on which the Storage daemon listens for "
+                "Director connections"),
             unique=True,
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
             verbose_name=_("Port"),
@@ -35,7 +36,6 @@ class BaculaSDStorage(models.Model):
             )
     baculasd_st_proceeddespiteioerrors = models.BooleanField(
             default=False,
-            help_text=_("Proceed despite I/O errors."),
             verbose_name=_("Proceed despite I/O errors"),
             )
 
