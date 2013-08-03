@@ -55,6 +55,18 @@ fi
 export PLUGINPORT
 
 #
+# Where to cache packages
+#
+PLUGINPKGDIR="${PBI_PKGDIR}/${PLUGIN}-${NANO_ARCH}"
+mkdir -p "${PLUGINPKGDIR}"
+if [ "$?" != "0" ]
+then
+        echo "${PLUGIN}: unable to create ${PLUGINPKGDIR}!"
+        exit 1
+fi
+export PLUGINPKGDIR
+
+#
 # Where to put the PBI
 #
 PLUGINOUT="${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}"
@@ -156,8 +168,8 @@ mtree -deU -f ${AVATAR_ROOT}/os-base/${NANO_ARCH}/_.w/etc/mtree/BSD.root.dist \
 #
 if [ -z "${PBI_PROGVERSION}" ]
 then
-	PORTVER="$(make -C ${PLUGINPORT} -V DISTVERSION 2>/dev/null)"
-	PORTREV="$(make -C ${PLUGINPORT} -V PORTREVISION 2>/dev/null)"
+	PORTVER="$(make PORTSDIR=${PLUGINPORTSDIR} -C ${PLUGINPORT} -V DISTVERSION 2>/dev/null)"
+	PORTREV="$(make PORTSDIR=${PLUGINPORTSDIR} -C ${PLUGINPORT} -V PORTREVISION 2>/dev/null)"
 	if [ ! -z "${PORTREV}" -a "${PORTREV}" != "0" ]
 	then
 		PORTVER="${PORTVER}_${PORTREV}"
@@ -189,7 +201,7 @@ last_orders()
 		pprint 2 "Creating PBI"
 		pprint 3 "log: ${PLUGINLOG}"
 
-		${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --tmpfs > "${PLUGINLOG}" 2>&1
+		${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" -c "${PLUGINCONFDIR}" -o "${PLUGINOUT}" --pkgdir "${PLUGINPKGDIR}" --tmpfs > "${PLUGINLOG}" 2>&1
 		if [ "$?" != "0" ]
 		then
 			echo "${PLUGIN}: failed to build PBI!"
