@@ -5,6 +5,9 @@ from django.views.static import serve
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+def servewrapper(request, plugin_id, **kwargs):
+     return serve(request, **kwargs)
+
 urlpatterns = patterns('baculaUI.freenas.views',
      url(r'^edit$', 'edit', name="bacula_edit"),
      url(r'^devices/$', 'devices_view', name="bacula_devices_view"),
@@ -36,7 +39,7 @@ urlpatterns = patterns('baculaUI.freenas.views',
      url(r'^messagesassigns/edit/(?P<oid>\d+)/$', 'messagesassigns_edit', name="bacula_messagesassigns_edit"),
      url(r'^messagesassigns/delete/(?P<oid>\d+)/$', 'messagesassigns_delete', name="bacula_messagesassigns_delete"),
      url(r'^treemenu-icon$', 'treemenu_icon', name="treemenu_icon"),
-     url(r'^media/(?P<path>.*)$', serve, {
+     url(r'^media/(?P<path>.*)$', servewrapper, {
             'document_root': os.path.join(HERE, "static"),
         }, name="bacula_media"),
      url(r'^_s/treemenu$', 'treemenu', name="treemenu"),
