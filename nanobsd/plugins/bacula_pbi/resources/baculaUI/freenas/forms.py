@@ -90,16 +90,12 @@ class BaculaSDDirectorForm(forms.ModelForm):
 class BaculaSDDeviceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
-        self.jail = kwargs.pop('jail')
+        self.jail_path = kwargs.pop('jail_path')
         super(BaculaSDDeviceForm, self).__init__(*args, **kwargs)
 
         self.fields['baculasd_dev_archivedevice'].widget = forms.widgets.TextInput(attrs={
             'data-dojo-type': 'freeadmin.form.PathSelector',
-            'root': os.path.join(
-                self.jail['fields']['jail_path'],
-                self.jail['fields']['jail_name'],
-                #self.plugin['fields']['plugin_path'][1:],
-                ),
+            'root': self.jail_path,
             'dirsonly': 'false',
             })
 

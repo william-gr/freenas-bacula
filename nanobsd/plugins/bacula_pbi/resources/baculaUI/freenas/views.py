@@ -170,7 +170,7 @@ def _generic_delete(request, oid, model):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = model.objects.get(id=oid)
     if request.method == "POST":
         instance.delete()
@@ -184,7 +184,7 @@ def _generic_delete(request, oid, model):
     })
 
 
-def start(request):
+def start(request, plugin_id):
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
 
     url = utils.get_rpc_url(request)
@@ -194,7 +194,7 @@ def start(request):
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(
         request.COOKIES.get("sessionid", ""))
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     assert auth
 
     try:
@@ -226,7 +226,7 @@ def start(request):
         }), content_type='application/json')
 
 
-def stop(request):
+def stop(request, plugin_id):
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=bacula_key,
@@ -235,7 +235,7 @@ def stop(request):
     server = jsonrpclib.Server(url, transport=trans)
     auth = server.plugins.is_authenticated(
         request.COOKIES.get("sessionid", ""))
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     assert auth
 
     try:
@@ -263,7 +263,7 @@ def stop(request):
         }), content_type='application/json')
 
 
-def edit(request):
+def edit(request, plugin_id):
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
     trans = OAuthTransport(url, key=bacula_key,
@@ -280,7 +280,7 @@ def edit(request):
 
     try:
         server = jsonrpclib.Server(url, transport=trans)
-        jail = json.loads(server.plugins.jail.info())[0]
+        jail_path = server.plugins.jail.path(plugin_id)
         auth = server.plugins.is_authenticated(
             request.COOKIES.get("sessionid", ""))
         assert auth
@@ -289,7 +289,7 @@ def edit(request):
 
     if request.method == "GET":
         form = forms.BaculaSDStorageForm(instance=bacula,
-            jail=jail)
+            jail_path=jail_path)
         return render(request, "edit.html", {
             'form': form,
         })
@@ -309,7 +309,7 @@ def edit(request):
     return JsonResponse(request, form=form)
 
 
-def treemenu(request):
+def treemenu(request, plugin_id):
     """
     This is how we inject nodes to the Tree Menu
 
@@ -322,14 +322,14 @@ def treemenu(request):
         daemons.append({
             'name': unicode(obj),
             'type': 'pluginsfcgi',
-            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_storage_daemon.png'}),
-            'url': reverse('bacula_daemons_edit', kwargs={'oid': obj.id}),
+            'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_storage_daemon.png'}),
+            'url': reverse('bacula_daemons_edit', kwargs={'plugin_id': plugin_id, 'oid': obj.id}),
             })
     daemons.append({
         'name': 'Add Daemon',
         'type': 'pluginsfcgi',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_storage.png'}),
-            'url': reverse('bacula_daemons_new'),
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_add_storage.png'}),
+            'url': reverse('bacula_daemons_new', kwargs={'plugin_id': plugin_id}),
     })
 
     directors = []
@@ -337,14 +337,14 @@ def treemenu(request):
         directors.append({
             'name': unicode(obj),
             'type': 'pluginsfcgi',
-            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director.png'}),
-            'url': reverse('bacula_directors_edit', kwargs={'oid': obj.id}),
+            'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_director.png'}),
+            'url': reverse('bacula_directors_edit', kwargs={'plugin_id': plugin_id, 'oid': obj.id}),
             })
     directors.append({
         'name': 'Add Director',
         'type': 'pluginsfcgi',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_director.png'}),
-            'url': reverse('bacula_directors_new'),
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_add_director.png'}),
+            'url': reverse('bacula_directors_new', kwargs={'plugin_id': plugin_id}),
     })
 
     directorassigns = []
@@ -352,14 +352,14 @@ def treemenu(request):
         directorassigns.append({
             'name': unicode(obj),
             'type': 'pluginsfcgi',
-            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director_map.png'}),
-            'url': reverse('bacula_directorassigns_edit', kwargs={'oid': obj.id}),
+            'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_director_map.png'}),
+            'url': reverse('bacula_directorassigns_edit', kwargs={'plugin_id': plugin_id, 'oid': obj.id}),
             })
     directorassigns.append({
         'name': 'Add Director Assignment',
         'type': 'pluginsfcgi',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_director_map.png'}),
-            'url': reverse('bacula_directorassigns_new'),
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_add_director_map.png'}),
+            'url': reverse('bacula_directorassigns_new', kwargs={'plugin_id': plugin_id}),
     })
 
     devices = []
@@ -367,14 +367,14 @@ def treemenu(request):
         devices.append({
             'name': unicode(obj),
             'type': 'pluginsfcgi',
-            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_device.png'}),
-            'url': reverse('bacula_devices_edit', kwargs={'oid': obj.id}),
+            'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_device.png'}),
+            'url': reverse('bacula_devices_edit', kwargs={'plugin_id': plugin_id, 'oid': obj.id}),
             })
     devices.append({
         'name': 'Add Device',
         'type': 'pluginsfcgi',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_device.png'}),
-            'url': reverse('bacula_devices_new'),
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_add_device.png'}),
+            'url': reverse('bacula_devices_new', kwargs={'plugin_id': plugin_id}),
     })
 
     deviceassigns = []
@@ -382,14 +382,14 @@ def treemenu(request):
         deviceassigns.append({
             'name': unicode(obj),
             'type': 'pluginsfcgi',
-            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_device_map.png'}),
-            'url': reverse('bacula_deviceassigns_edit', kwargs={'oid': obj.id}),
+            'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_device_map.png'}),
+            'url': reverse('bacula_deviceassigns_edit', kwargs={'plugin_id': plugin_id, 'oid': obj.id}),
             })
     deviceassigns.append({
         'name': 'Add Device Assignment',
         'type': 'pluginsfcgi',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_device_map.png'}),
-            'url': reverse('bacula_deviceassigns_new'),
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_add_device_map.png'}),
+            'url': reverse('bacula_deviceassigns_new', kwargs={'plugin_id': plugin_id}),
     })
 
     messages = []
@@ -397,14 +397,14 @@ def treemenu(request):
         messages.append({
             'name': unicode(obj),
             'type': 'pluginsfcgi',
-            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_messages.png'}),
-            'url': reverse('bacula_messages_edit', kwargs={'oid': obj.id}),
+            'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_messages.png'}),
+            'url': reverse('bacula_messages_edit', kwargs={'plugin_id': plugin_id, 'oid': obj.id}),
             })
     messages.append({
         'name': 'Add Message',
         'type': 'pluginsfcgi',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_messages.png'}),
-            'url': reverse('bacula_messages_new'),
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_add_messages.png'}),
+            'url': reverse('bacula_messages_new', kwargs={'plugin_id': plugin_id}),
     })
 
     messagesassigns = []
@@ -412,57 +412,57 @@ def treemenu(request):
         messagesassigns.append({
             'name': unicode(obj),
             'type': 'pluginsfcgi',
-            'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_messages_map.png'}),
-            'url': reverse('bacula_messagesassigns_edit', kwargs={'oid': obj.id}),
+            'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_messages_map.png'}),
+            'url': reverse('bacula_messagesassigns_edit', kwargs={'plugin_id': plugin_id, 'oid': obj.id}),
             })
     messagesassigns.append({
         'name': 'Add Message Assignment',
         'type': 'pluginsfcgi',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_add_messages_map.png'}),
-            'url': reverse('bacula_messagesassigns_new'),
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_add_messages_map.png'}),
+            'url': reverse('bacula_messagesassigns_new', kwargs={'plugin_id': plugin_id}),
     })
 
     plugin = {
         'name': 'Bacula Storage',
-        'append_to': 'services.PluginsJail',
-        'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula.png'}),
+        'append_to': 'plugins',
+        'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula.png'}),
         'type': 'pluginsfcgi',
-        'url': reverse('bacula_edit'),
+        'url': reverse('bacula_edit', kwargs={'plugin_id': plugin_id}),
         'children': [
             {
                 'name': 'Storage Daemons',
-                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_storage_daemon.png'}),
+                'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_storage_daemon.png'}),
                 'children': daemons,
             },
             {
                 'name': 'Directors',
                 'children': directors,
-                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director.png'}),
+                'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_director.png'}),
             },
             {
                 'name': 'Director Assignments',
                 'children': directorassigns,
-                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_director_map.png'}),
+                'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_director_map.png'}),
             },
             {
                 'name': 'Devices',
                 'children': devices,
-                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_device.png'}),
+                'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_device.png'}),
             },
             {
                 'name': 'Device Assignments',
                 'children': deviceassigns,
-                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_device_map.png'}),
+                'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_device_map.png'}),
             },
             {
                 'name': 'Messages',
                 'children': messages,
-                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_messages.png'}),
+                'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_messages.png'}),
             },
             {
                 'name': 'Messages Assignment',
                 'children': messagesassigns,
-                'icon': reverse('bacula_media', kwargs={'path': 'images/tree/bacula_messages_map.png'}),
+                'icon': reverse('bacula_media', kwargs={'plugin_id': plugin_id, 'path': 'images/tree/bacula_messages_map.png'}),
             },
         ],
     }
@@ -470,7 +470,7 @@ def treemenu(request):
     return HttpResponse(json.dumps([plugin]), content_type='application/json')
 
 
-def status(request):
+def status(request, plugin_id):
     """
     Returns a dict containing the current status of the services
 
@@ -499,7 +499,7 @@ def status(request):
         content_type='application/json')
 
 
-def treemenu_icon(request):
+def treemenu_icon(request, plugin_id):
 
     with open(utils.bacula_icon, 'rb') as f:
         icon = f.read()
@@ -507,7 +507,7 @@ def treemenu_icon(request):
     return HttpResponse(icon, content_type='image/png')
 
 
-def devices_new(request):
+def devices_new(request, plugin_id):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -515,9 +515,9 @@ def devices_new(request):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     if request.method == "POST":
-        form = forms.BaculaSDDeviceForm(request.POST, jail=jail)
+        form = forms.BaculaSDDeviceForm(request.POST, jail_path=jail_path)
         if form.is_valid():
             form.save()
             return JsonResponse(request,
@@ -528,18 +528,18 @@ def devices_new(request):
             'form': form,
         })
     else:
-        form = forms.BaculaSDDeviceForm(jail=jail)
+        form = forms.BaculaSDDeviceForm(jail_path=jail_path)
 
     return render(request, "devices_new.html", {
         'form': form,
     })
 
 
-def devices_view(request):
+def devices_view(request, plugin_id):
     return render(request, "devices_view.html", {})
 
 
-def devices_edit(request, oid):
+def devices_edit(request, plugin_id, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -547,9 +547,9 @@ def devices_edit(request, oid):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = models.BaculaSDDevice.objects.get(id=oid)
-    delete_url = reverse('bacula_devices_delete', kwargs={'oid': instance.id})
+    delete_url = reverse('bacula_devices_delete', kwargs={'plugin_id': plugin_id, 'oid': instance.id})
     if request.method == "POST":
         form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail=jail)
         if form.is_valid():
@@ -571,11 +571,11 @@ def devices_edit(request, oid):
     })
 
 
-def devices_delete(request, oid):
+def devices_delete(request, plugin_id, oid):
     return _generic_delete(request, oid, model=models.BaculaSDDevice)
 
 
-def deviceassigns_new(request):
+def deviceassigns_new(request, plugin_id):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -583,7 +583,7 @@ def deviceassigns_new(request):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     if request.method == "POST":
         form = forms.BaculaSDDeviceAssignmentForm(request.POST)
         if form.is_valid():
@@ -603,11 +603,11 @@ def deviceassigns_new(request):
     })
 
 
-def deviceassigns_view(request):
+def deviceassigns_view(request, plugin_id):
     return render(request, "deviceassigns_view.html", {})
 
 
-def deviceassigns_edit(request, oid):
+def deviceassigns_edit(request, plugin_id, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -615,9 +615,9 @@ def deviceassigns_edit(request, oid):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = models.BaculaSDDeviceAssignment.objects.get(id=oid)
-    delete_url = reverse('bacula_deviceassigns_delete', kwargs={'oid': oid})
+    delete_url = reverse('bacula_deviceassigns_delete', kwargs={'plugin_id': plugin_id, 'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDDeviceAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
@@ -639,11 +639,11 @@ def deviceassigns_edit(request, oid):
     })
 
 
-def deviceassigns_delete(request, oid):
+def deviceassigns_delete(request, plugin_id, oid):
     return _generic_delete(request, oid, model=models.BaculaSDDeviceAssignment)
 
 
-def directors_new(request):
+def directors_new(request, plugin_id):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -651,7 +651,7 @@ def directors_new(request):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     if request.method == "POST":
         form = forms.BaculaSDDirectorForm(request.POST)
         if form.is_valid():
@@ -671,7 +671,7 @@ def directors_new(request):
     })
 
 
-def directors_edit(request, oid):
+def directors_edit(request, plugin_id, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -679,9 +679,9 @@ def directors_edit(request, oid):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = models.BaculaSDDirector.objects.get(id=oid)
-    delete_url = reverse('bacula_directors_delete', kwargs={'oid': oid})
+    delete_url = reverse('bacula_directors_delete', kwargs={'plugin_id': plugin_id, 'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDDirectorForm(request.POST, instance=instance)
         if form.is_valid():
@@ -703,15 +703,15 @@ def directors_edit(request, oid):
     })
 
 
-def directors_view(request):
+def directors_view(request, plugin_id):
     return render(request, "devices_view.html", {})
 
 
-def directors_delete(request, oid):
+def directors_delete(request, plugin_id, oid):
     return _generic_delete(request, oid, model=models.BaculaSDDirector)
 
 
-def directorassigns_new(request):
+def directorassigns_new(request, plugin_id):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -719,7 +719,7 @@ def directorassigns_new(request):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     if request.method == "POST":
         form = forms.BaculaSDDirectorAssignmentForm(request.POST)
         if form.is_valid():
@@ -739,7 +739,7 @@ def directorassigns_new(request):
     })
 
 
-def directorassigns_edit(request, oid):
+def directorassigns_edit(request, plugin_id, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -747,9 +747,9 @@ def directorassigns_edit(request, oid):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = models.BaculaSDDirectorAssignment.objects.get(id=oid)
-    delete_url = reverse('bacula_directorassigns_delete', kwargs={'oid': oid})
+    delete_url = reverse('bacula_directorassigns_delete', kwargs={'plugin_id': plugin_id, 'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDDirectorAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
@@ -771,15 +771,15 @@ def directorassigns_edit(request, oid):
     })
 
 
-def directorassigns_view(request):
+def directorassigns_view(request, plugin_id):
     return render(request, "devices_view.html", {})
 
 
-def directorassigns_delete(request, oid):
+def directorassigns_delete(request, plugin_id, oid):
     return _generic_delete(request, oid, model=models.BaculaSDDirectorAssignment)
 
 
-def daemons_new(request):
+def daemons_new(request, plugin_id):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -787,7 +787,7 @@ def daemons_new(request):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     if request.method == "POST":
         form = forms.BaculaSDStorageForm(request.POST)
         if form.is_valid():
@@ -807,7 +807,7 @@ def daemons_new(request):
     })
 
 
-def daemons_edit(request, oid):
+def daemons_edit(request, plugin_id, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -815,9 +815,9 @@ def daemons_edit(request, oid):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = models.BaculaSDStorage.objects.get(id=oid)
-    delete_url = reverse('bacula_daemons_delete', kwargs={'oid': oid})
+    delete_url = reverse('bacula_daemons_delete', kwargs={'plugin_id': plugin_id, 'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDStorageForm(request.POST, instance=instance)
         if form.is_valid():
@@ -839,15 +839,15 @@ def daemons_edit(request, oid):
     })
 
 
-def daemons_view(request):
+def daemons_view(request, plugin_id):
     return render(request, "daemons_view.html", {})
 
 
-def daemons_delete(request, oid):
+def daemons_delete(request, plugin_id, oid):
     return _generic_delete(request, oid, model=models.BaculaSDStorage)
 
 
-def messages_new(request):
+def messages_new(request, plugin_id):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -855,7 +855,7 @@ def messages_new(request):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     if request.method == "POST":
         form = forms.BaculaSDMessagesForm(request.POST)
         if form.is_valid():
@@ -875,11 +875,11 @@ def messages_new(request):
     })
 
 
-def messages_view(request):
+def messages_view(request, plugin_id):
     return render(request, "messages_view.html", {})
 
 
-def messages_edit(request, oid):
+def messages_edit(request, plugin_id, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -887,9 +887,9 @@ def messages_edit(request, oid):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = models.BaculaSDMessages.objects.get(id=oid)
-    delete_url = reverse('bacula_messages_delete', kwargs={'oid': oid})
+    delete_url = reverse('bacula_messages_delete', kwargs={'plugin_id': plugin_id, 'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDMessagesForm(request.POST, instance=instance)
         if form.is_valid():
@@ -911,11 +911,11 @@ def messages_edit(request, oid):
     })
 
 
-def messages_delete(request, oid):
+def messages_delete(request, plugin_id, oid):
     return _generic_delete(request, oid, model=models.BaculaSDMessages)
 
 
-def messagesassigns_new(request):
+def messagesassigns_new(request, plugin_id):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -923,7 +923,7 @@ def messagesassigns_new(request):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     if request.method == "POST":
         form = forms.BaculaSDMessagesAssignmentForm(request.POST)
         if form.is_valid():
@@ -943,11 +943,11 @@ def messagesassigns_new(request):
     })
 
 
-def messagesassigns_view(request):
+def messagesassigns_view(request, plugin_id):
     return render(request, "messagesassigns_view.html", {})
 
 
-def messagesassigns_edit(request, oid):
+def messagesassigns_edit(request, plugin_id, oid):
 
     bacula_key, bacula_secret = utils.get_bacula_oauth_creds()
     url = utils.get_rpc_url(request)
@@ -955,9 +955,9 @@ def messagesassigns_edit(request, oid):
         secret=bacula_secret)
     server = jsonrpclib.Server(url, transport=trans)
 
-    jail = json.loads(server.plugins.jail.info())[0]
+    jail_path = server.plugins.jail.path(plugin_id)
     instance = models.BaculaSDMessagesAssignment.objects.get(id=oid)
-    delete_url = reverse('bacula_messagesassigns_delete', kwargs={'oid': oid})
+    delete_url = reverse('bacula_messagesassigns_delete', kwargs={'plugin_id': plugin_id, 'oid': oid})
     if request.method == "POST":
         form = forms.BaculaSDMessagesAssignmentForm(request.POST, instance=instance)
         if form.is_valid():
@@ -979,5 +979,5 @@ def messagesassigns_edit(request, oid):
     })
 
 
-def messagesassigns_delete(request, oid):
+def messagesassigns_delete(request, plugin_id, oid):
     return _generic_delete(request, oid, model=models.BaculaSDMessagesAssignment)
