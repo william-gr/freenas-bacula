@@ -551,7 +551,7 @@ def devices_edit(request, plugin_id, oid):
     instance = models.BaculaSDDevice.objects.get(id=oid)
     delete_url = reverse('bacula_devices_delete', kwargs={'plugin_id': plugin_id, 'oid': instance.id})
     if request.method == "POST":
-        form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail=jail)
+        form = forms.BaculaSDDeviceForm(request.POST, instance=instance, jail_path=jail_path)
         if form.is_valid():
             form.save()
             return JsonResponse(request,
@@ -563,7 +563,7 @@ def devices_edit(request, plugin_id, oid):
             'delete_url': delete_url,
         })
     else:
-        form = forms.BaculaSDDeviceForm(instance=instance, jail=jail)
+        form = forms.BaculaSDDeviceForm(instance=instance, jail_path=jail_path)
 
     return render(request, "devices_edit.html", {
         'form': form,
