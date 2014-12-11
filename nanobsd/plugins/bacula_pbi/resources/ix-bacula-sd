@@ -106,7 +106,8 @@ print_sql_device () {
 	       baculasd_dev_randomaccess,
 	       0,
 	       baculasd_dev_removablemedia,
-	       baculasd_dev_alwaysopen
+	       baculasd_dev_alwaysopen,
+	       baculasd_dev_maximumconcurrentjobs
 	FROM freenas_baculasddevice             AS r,
 	     freenas_baculasddeviceassignment   AS a
 	WHERE r.id = a.baculasd_map_device_id AND
@@ -127,7 +128,8 @@ print_device_stanzas () {
                RANDOM_ACCESS  \
                AUTOMATIC_MOUNT \
                REMOVABLE_MEDIA \
-               ALWAYS_OPEN
+               ALWAYS_OPEN \
+               MAX_DEV_JOBS
     do
       echo 'Device {'
       [ ${NAME}           ] && echo "  Name = ${NAME}"
@@ -138,6 +140,7 @@ print_device_stanzas () {
       [ ${AUTOMATIC_MOUNT} ] && echo "  Automatic Mount = $(trans_bool ${AUTOMATIC_MOUNT})"
       [ ${REMOVABLE_MEDIA} ] && echo "  Removable Media = $(trans_bool ${REMOVABLE_MEDIA})"
       [ ${ALWAYS_OPEN}     ] && echo "  Always Open = $(trans_bool ${ALWAYS_OPEN})"
+      [ ${MAX_DEV_JOBS}    ] && echo "  Maximum Concurrent Jobs = ${MAX_DEV_JOBS}"
       echo '}'
     done
 }
