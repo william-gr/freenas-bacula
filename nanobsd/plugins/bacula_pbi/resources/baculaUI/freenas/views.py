@@ -299,7 +299,7 @@ def edit(request, plugin_id):
 
     form = forms.BaculaSDStorageForm(request.POST,
         instance=bacula,
-        jail=jail)
+        jail_path=jail_path)
     if form.is_valid():
         form.save()
         return JsonResponse(request,
