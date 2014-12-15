@@ -33,7 +33,7 @@ print_sql_storage () {
   cat <<- EOT
 	SELECT baculasd_st_name,
 	       baculasd_st_sdport,
-	       '/usr/pbi',
+	       '/var/db/bacula',
 	       '/var/run',
 	       baculasd_st_maximumconcurrentjobs
 	FROM freenas_baculasdstorage
@@ -56,6 +56,7 @@ print_storage_stanza () {
       echo 'Storage {'
       [ ${NAME}                    ] && echo "  Name = ${NAME}"
       [ ${SDPORT}                  ] && echo "  SDPort = ${SDPORT}"
+# --- somewhere writable to bacula user
       [ ${WORKING_DIRECTORY}       ] && echo "  Working Directory = ${WORKING_DIRECTORY}"
       [ ${PID_DIRECTORY}           ] && echo "  Pid Directory = ${PID_DIRECTORY}"
       [ ${MAXIMUM_CONCURRENT_JOBS} ] && echo "  Maximum Concurrent Jobs = ${MAXIMUM_CONCURRENT_JOBS}"
@@ -211,21 +212,6 @@ check_conf () {
   grep -q ^Messages ${BACULA_SD_CFG} || return 1
 }
 
-update_rc_file () {
-  local RC_FILE="/etc/rc.d/bacula-sd"
-  local TMP_FILE="/tmp/bacula-sd.rc.tmp"
-
-  grep -q '^command=/tmp/bacula-sd' ${RC_FILE} && return
-
-  sed -e 's/^command=/procname=/'  \
-      -e 's/^pidfile=/#procname=/' \
-      ${RC_FILE} >                \
-      ${TMP_FILE}
-
-  sed -e '/^procname/a\
-command=/tmp/bacula-sd' ${TMP_FILE} > ${RC_FILE}
-}
-
 print_sql_storage_id () {
   cat <<- EOT
 	SELECT id,
@@ -242,20 +228,17 @@ generate_bacula_sd()
   local BACULA_SD_NEW_CMD="/tmp/bacula-sd"
   local BACULA_SD_COMMAND="/usr/local/sbin/bacula-sd"
   local BACULA_SD_FLAGS="-u bacula -g bacula -v"
-  local BACULA_SD_PID=""
+  local BACULA_SD_PORT=""
   local STORAGE_ID=""
   local PROCEED_IOERR=""
   local P_FLAG=""
 
-  > ${BACULA_SD_NEW_CMD}
-  chmod 700 ${BACULA_SD_NEW_CMD}
-
   query_db "${STATEMENT}"    \
   | while read STORAGE_ID    \
-               BACULA_SD_PID \
+               BACULA_SD_PORT \
                PROCEED_IOERR
     do
-      BACULA_SD_CFG=${BACULA_HOME}/etc/bacula-sd.${BACULA_SD_PID}.conf
+      BACULA_SD_CFG=${BACULA_HOME}/etc/bacula-sd.${BACULA_SD_PORT}.conf
 
       if [ $PROCEED_IOERR -eq 1 ]
       then P_FLAG=" -p"
@@ -266,12 +249,14 @@ generate_bacula_sd()
 
       if check_conf ${BACULA_SD_CFG}
       then
+      # --- if conf is ok generate start-stop-script for this sd-instance/port
+        > ${BACULA_SD_NEW_CMD}-${BACULA_SD_PORT}
+        chmod 700 ${BACULA_SD_NEW_CMD}-${BACULA_SD_PORT}
         echo "${BACULA_SD_COMMAND} ${BACULA_SD_FLAGS}${P_FLAG} -c ${BACULA_SD_CFG}" \
-          >> ${BACULA_SD_NEW_CMD}
+          >> ${BACULA_SD_NEW_CMD}-${BACULA_SD_PORT}
       fi
 
-      update_rc_file
-    done
+   done
 }
 
 name=ix-bacula-sd

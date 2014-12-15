@@ -53,7 +53,12 @@ bacula_start()
 			baculasd_st_sdport
 	 	FROM freenas_baculasdstorage" | \
 	while read -r port; do
-		${BACULA_SD} -c ${BACULA_PATH}/etc/bacula-sd.${port}.conf
+                # --- as created by ix-bacula-sd
+                if [ -r /tmp/bacula-sd-${port} ]; then
+                   /tmp/bacula-sd-${port} > /tmp/bacula-${port}.log 2>&1
+                else
+                   ${BACULA_SD} -v -c ${BACULA_PATH}/etc/bacula-sd.${port}.conf
+                fi
 	done
 
 }
