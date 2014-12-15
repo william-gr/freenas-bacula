@@ -33,7 +33,7 @@ print_sql_storage () {
   cat <<- EOT
 	SELECT baculasd_st_name,
 	       baculasd_st_sdport,
-	       '/usr/pbi/bacula',
+	       $BACULA_HOME,
 	       '/var/run',
 	       baculasd_st_maximumconcurrentjobs
 	FROM freenas_baculasdstorage
