@@ -33,7 +33,7 @@ print_sql_storage () {
   cat <<- EOT
 	SELECT baculasd_st_name,
 	       baculasd_st_sdport,
-	       $BACULA_HOME,
+	       '/var/db/bacula',
 	       '/var/run',
 	       baculasd_st_maximumconcurrentjobs
 	FROM freenas_baculasdstorage
@@ -56,6 +56,7 @@ print_storage_stanza () {
       echo 'Storage {'
       [ ${NAME}                    ] && echo "  Name = ${NAME}"
       [ ${SDPORT}                  ] && echo "  SDPort = ${SDPORT}"
+# --- somewhere writable to bacula user
       [ ${WORKING_DIRECTORY}       ] && echo "  Working Directory = ${WORKING_DIRECTORY}"
       [ ${PID_DIRECTORY}           ] && echo "  Pid Directory = ${PID_DIRECTORY}"
       [ ${MAXIMUM_CONCURRENT_JOBS} ] && echo "  Maximum Concurrent Jobs = ${MAXIMUM_CONCURRENT_JOBS}"
